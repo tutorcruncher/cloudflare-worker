@@ -52,7 +52,7 @@ function get_frames (stack) {
     const [filename, lineno, colno] = b.split(':')
     return {
       in_app: true,
-      filename: 'app:///' + filename,
+      filename: '~/dist/' + filename,
       function: func,
       lineno,
       colno,

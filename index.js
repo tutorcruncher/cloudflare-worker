@@ -9,7 +9,7 @@ async function handle_request(event) {
   const request = new Request(event.request)
   await request.prepare()
   const sentry = new Sentry(event, request)
-  sentry.captureMessage(`request to ${request.url}`, {extra: {foo: 'bar', x: 42}})
+  // sentry.captureMessage(`request to ${request.url}`, {extra: {foo: 'bar', x: 42}})
   try {
     const handler = router(routes)
     return await handler(request)
