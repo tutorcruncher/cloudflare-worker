@@ -1,5 +1,5 @@
 const foo = () => {
-  throw Error('broken')
+  throw Error('broken more')
 }
 
 export default async function handle_request(request) {

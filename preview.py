@@ -1,7 +1,8 @@
 #!/usr/bin/env python3.6
 import platform
-import subprocess
+import os
 import shlex
+import subprocess
 import sys
 from pathlib import Path
 import requests
@@ -23,11 +24,40 @@ def get_browser_opener():
         return 'open'  # osx at least
 
 
-subprocess.run(('yarn', 'build'), check=True)
+p = subprocess.run(('git', 'rev-parse', 'HEAD'), check=True, stdout=subprocess.PIPE)
+release = p.stdout.decode().strip('\n')
+subprocess.run(('yarn', 'build'), check=True, env={'RELEASE': release, 'RAVEN_DSN': os.getenv('RAVEN_DSN', '')})
 
-content = Path('dist/worker.js').read_bytes()
+bearer_token = os.getenv('BEARER_TOKEN')
+headers = {
+    'Authorization': f'Bearer {bearer_token}',
+}
+data = {'version': release}
+r = requests.post('https://sentry.io/api/0/projects/tutorcruncher/cf-workers/releases/', json=data, headers=headers)
+assert r.status_code in (201, 208), (r.status_code, r.text)
+
+dist = Path('dist')
+assert dist.is_dir()
+
+files = {'file': ('~/worker.js.map', (dist / 'worker.js.map').open('rb'))}
+
+if r.status_code == 208:
+    print('release already existing, deleting release and recreating')
+    r = requests.delete(f'https://sentry.io/api/0/projects/tutorcruncher/cf-workers/releases/{release}/',
+                        headers=headers)
+    assert r.status_code == 204, (r.status_code, r.text)
+
+    r = requests.post('https://sentry.io/api/0/projects/tutorcruncher/cf-workers/releases/', json=data, headers=headers)
+    assert r.status_code in (201, 208), (r.status_code, r.text)
+
+print('uploading release assets')
+r = requests.post(f'https://sentry.io/api/0/projects/tutorcruncher/cf-workers/releases/{release}/files/',
+                  files=files, headers=headers)
+assert r.status_code == 201, (r.status_code, r.text)
+
+content = (dist / 'worker.js').read_bytes()
 r = requests.post('https://cloudflareworkers.com/script', data=content)
-assert r.status_code == 201, r.text
+assert r.status_code == 201, (r.status_code, r.text)
 
 upload_id = r.json()['id']
 

@@ -50,7 +50,13 @@ function get_frames (stack) {
     const func = l.match(/at (\S+)/)[1]
     const b = l.match(/\((.*)\)/)[1]
     const [filename, lineno, colno] = b.split(':')
-    return {function: func, filename, lineno, colno, in_app: true}
+    return {
+      in_app: true,
+      filename: 'app:///' + filename,
+      function: func,
+      lineno,
+      colno,
+    }
   })
 }
 
@@ -66,11 +72,13 @@ export class Sentry {
     const project_id = dsn.match(/\.io\/(.+)/)[1]
     this.sentry_url = `https://sentry.io/api/${project_id}/store/` +
                       `?sentry_version=7&sentry_client=cloudflare-worker-custom&sentry_key=${api_key}`
+    this.release = process.env.RELEASE
   }
 
   capture (data) {
     const defaults = {
       platform: 'javascript',
+      fingerprint: [`${this.request.method}-${this.request.url}-${data.message || 'null'}`],
       user: {
         ip_address: this.request.headers['cf-connecting-ip']
       },
@@ -79,6 +87,9 @@ export class Sentry {
           method: this.request.method,
           headers: this.request.headers,
       },
+    }
+    if (this.release) {
+      defaults.release = this.release
     }
     const promise = fetch(this.sentry_url, {body: JSON.stringify(Object.assign(defaults, data)), method: 'POST'})
     this.event.waitUntil(promise)
