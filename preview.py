@@ -2,10 +2,13 @@
 import platform
 import subprocess
 import shlex
+import sys
 from pathlib import Path
 import requests
 
 worker_fake_url = 'https://workers.tutorcruncher.com'
+if len(sys.argv) > 1:
+    worker_fake_url += f'/{sys.argv[1]}'
 
 
 def get_browser_opener():

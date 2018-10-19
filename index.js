@@ -1,25 +1,24 @@
-import Raven from 'raven-js'
-import {Request, router} from './src/utils'
+import {Request, Sentry, router} from './src/utils'
 import test from './src/test'
-
-Raven.config(process.env.RAVEN_DSN).install()
 
 const routes = {
   default: test
 }
 
-async function handle_request(raw_request) {
-  const request = new Request(raw_request)
+async function handle_request(event) {
+  const request = new Request(event.request)
   await request.prepare()
-  Raven.captureMessage(`request ${request.url}`, {extra: {request: request.debug_info()}})
+  const sentry = new Sentry(event, request)
+  // sentry.captureMessage(`request ${request.url}`, {extra: {foo: 'bar', x: 42}})
   try {
     const handler = router(routes)
-    return handler(event.request)
+    return await handler(request)
   } catch (e) {
-    Raven.captureException(e)
+    sentry.captureException(e)
+    return new Response('an error ocurred', {status: 500})
   }
 }
 
 addEventListener('fetch', event => {
-  event.respondWith(handle_request(event.request))
+  event.respondWith(handle_request(event))
 })
