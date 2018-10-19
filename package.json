@@ -1,0 +1,17 @@
+{
+  "name": "cloudflare-worker",
+  "version": "1.0.0",
+  "description": "TutorCruncher Cloudflare Worker",
+  "main": "dist/worker.js",
+  "author": "Samuel Colvin",
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "build": "webpack -p --progress --colors"
+  },
+  "dependencies": {
+    "raven-js": "^3.27.0",
+    "webpack": "^4.21.0",
+    "webpack-cli": "^3.1.2"
+  }
+}
