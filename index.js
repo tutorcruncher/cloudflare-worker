@@ -1,8 +1,8 @@
-import Raven from 'raven-js'
+import * as Sentry from '@sentry/minimal'
 import {Request, router} from './src/utils'
 import test from './src/test'
 
-Raven.config(process.env.RAVEN_DSN).install()
+Sentry.init({dsn: process.env.RAVEN_DSN})
 
 const routes = {
   default: test
@@ -11,12 +11,12 @@ const routes = {
 async function handle_request(raw_request) {
   const request = new Request(raw_request)
   await request.prepare()
-  Raven.captureMessage(`request ${request.url}`, {extra: {request: request.debug_info()}})
+  Sentry.captureMessage(`request ${request.url}`, {extra: {request: request.debug_info()}})
   try {
     const handler = router(routes)
     return handler(event.request)
   } catch (e) {
-    Raven.captureException(e)
+    Sentry.captureException(e)
   }
 }
 
