@@ -2,7 +2,7 @@ addEventListener('fetch', event => {
   event.respondWith(handleRequest(event.request))
 })
 
-const ic_token = 'dG9rOmU5NTYxNTgzXzhiNTlfNGJiM19iYTZkXzc4MjlhNWQyOWUyYToxOjA='
+const ic_token = ''
 const intercom_url = 'https://api.intercom.io/'
 const no_sup_msg = `
 Thanks for getting in touch 😃
